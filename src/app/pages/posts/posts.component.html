@@ -1,0 +1,127 @@
+<div class="container">
+  <div class="row">
+    <div class="col-8">
+      <mat-card class="example-card mb-3" *ngFor="let art of articles">
+        <mat-card-header>
+          <div
+            mat-card-avatar
+            [ngStyle]="{
+              'background-image': ' url(' + art.article_image + ')',
+              'background-size': 'cover'
+            }"
+            class="example-header-image"
+          ></div>
+          <mat-card-title
+            class="title"
+            [routerLink]="['/account/articles', art._id]"
+            >{{ art.title }}</mat-card-title
+          >
+          <mat-card-subtitle>{{ art?.autherId.name }}</mat-card-subtitle>
+          <span class="ml-auto mr-3" *ngIf="auth_user">
+            <button
+              mat-icon-button
+              [matMenuTriggerFor]="menu"
+              aria-label="Example icon-button with a menu"
+            >
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu">
+              <button mat-menu-item (click)="onAddToBookmarksClicked(art._id)">
+                <mat-icon>{{
+                  auth_user.bookmarks.includes(art._id) ? "star" : "star_border"
+                }}</mat-icon>
+                <span>{{
+                  auth_user.bookmarks.includes(art._id)
+                    ? "Remove From Bookmarks"
+                    : "Add To Bookmarks"
+                }}</span>
+              </button>
+            </mat-menu>
+          </span>
+        </mat-card-header>
+        <img
+          mat-card-image
+          routerLink="/test"
+          class="img-article"
+          [src]="art.article_image"
+          [alt]="'title'"
+        />
+        <mat-card-content>
+          <p>{{ art.sub_title }}</p>
+        </mat-card-content>
+        <mat-card-actions class="action-buttons" *ngIf="auth_user">
+          <div class="dropdown">
+            <button
+              mat-button
+              color="primary"
+              [disabled]="disableIfLiked(art)"
+              (click)="onLikeArticle(art?._id)"
+            >
+              <mat-icon
+                class="mat-18 mb-3"
+                [svgIcon]="
+                  disableIfLiked(art) ? 'thumb_up_filled' : 'thumb_up_outline'
+                "
+              ></mat-icon>
+              Likes {{ art.likes }}
+            </button>
+            <div class="dropdown-content">
+              <a
+                *ngFor="let liker of art.likedBy"
+                [routerLink]="['/account', liker.username]"
+                >{{ liker.name }}</a
+              >
+            </div>
+          </div>
+          <div class="dropdown">
+            <button
+              mat-button
+              color="primary"
+              [disabled]="disableIfDisLiked(art)"
+              (click)="onDisLikeArticle(art?._id)"
+            >
+              <mat-icon
+                class="mat-18 mb-2"
+                [svgIcon]="
+                  disableIfDisLiked(art)
+                    ? 'thumb_down_filled'
+                    : 'thumb_down_outline'
+                "
+              ></mat-icon>
+              DisLikes {{ art.dislikes }}
+            </button>
+            <div class="dropdown-content">
+              <a
+                [routerLink]="['/account', disliker.username]"
+                *ngFor="let disliker of art.dislikedBy"
+                >{{ disliker.name }}</a
+              >
+            </div>
+          </div>
+          <button mat-button>
+            <mat-icon class="mat-18" color="primary">comment</mat-icon> Comment
+          </button>
+          <!-- <button mat-button>
+            <span class="fa fa-stack">
+              <i class="fa fa-shield fa-stack-2x"></i>
+              <i class="fa fa-square fa-stack-bottom-right fa-inverse"></i>
+              <i class="fa fa-check-square fa-stack-bottom-right"></i>
+            </span>
+            Trust
+          </button> -->
+          <a mat-button class="ml-auto mr-3">
+            {{ art?.comments.length }} Comments
+          </a>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+    <div class="col-4">
+      <div class="card my-2">
+        <h5 class="card-header">Search</h5>
+        <div class="card-body">
+          <search-form></search-form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

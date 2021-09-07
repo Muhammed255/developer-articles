@@ -1,0 +1,23 @@
+::ng-deep {
+  .cdk-overlay-pane {
+    margin-left: auto;
+    margin: auto;
+  }
+}
+
+mat-form-field {
+  width: 85%;
+}
+
+input[type="file"] {
+  visibility: hidden;
+}
+
+.image-preview {
+  height: 5rem;
+  margin: 1rem 0;
+}
+
+.image-preview img {
+  height: 100%;
+}

@@ -1,0 +1,15 @@
+<form [formGroup]="searchForm" (ngSubmit)="onSubmitSearchForm()">
+  <div class="input-group">
+    <input
+      type="text"
+      class="form-control"
+      formControlName="searchString"
+      placeholder="Enter search term..."
+      aria-describedby="button-search"
+    />
+
+    <button id="button-search" class="btn btn-primary" type="submit">
+      Go!
+    </button>
+  </div>
+</form>
