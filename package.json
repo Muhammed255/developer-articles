@@ -25,6 +25,7 @@
     "@kolkov/angular-editor": "^1.2.0",
     "@yellowspot/ng-truncate": "^2.0.0",
     "angular2-flash-messages": "^3.0.1",
+    "express": "^4.17.1",
     "rxjs": "~6.6.0",
     "tslib": "^2.2.0",
     "zone.js": "~0.11.4"
