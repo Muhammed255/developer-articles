@@ -19,27 +19,27 @@ export class CategoryService {
 
   newCategory(name: string, description: string) {
     const categoryData = {name, description};
-    return this.http.post<{response: any}>(BACKEND_URL + 'new-cat', categoryData);
+    return this.http.post<{success: boolean, msg: string}>(BACKEND_URL + 'new-cat', categoryData);
   }
 
   getAllCategories() {
-    return this.http.get<{response: any}>(BACKEND_URL + 'get-all');
+    return this.http.get<{success: boolean, msg: string, categories: any[], maxCats: number}>(BACKEND_URL + 'get-all');
   }
-  
-  getAdminCategories(currentPage, catsPerPage) {
-    this.http.get<{ response: any }>(
-      `${BACKEND_URL}admin-categories?page=${currentPage}&pageSize=${catsPerPage}`
+
+  getAdminCategories(skip?: number, take?: number) {
+    this.http.get<{ success: boolean, msg: string, categories: any[], maxCats: number }>(
+      `${BACKEND_URL}admin-categories?skip=${skip}&take=${take}`
     ).pipe(map(catData => {
       return {
-        categories: catData.response.categories.map(cat => {
+        categories: catData.categories.map(cat => {
           return {
             name: cat.name,
             description: cat.description,
-            _id: cat._id,
-            userId: cat.userId
+            id: cat.id,
+            userId: cat.user
           }
         }),
-        maxCats: catData.response.maxCats
+        maxCats: catData.maxCats
       }
     })).subscribe(transformedCats => {
       this.cats = transformedCats.categories;
@@ -54,22 +54,22 @@ export class CategoryService {
     return this.catsUpdated.asObservable();
   }
 
-  findOneCategory(id: string) {
-    return this.http.get<{response: any}>(BACKEND_URL + id);
+  findOneCategory(id: number) {
+    return this.http.get<{success: boolean, msg: string, category: any}>(BACKEND_URL + id);
   }
 
-  updateCategory(id: string, name: string, description: string) {
+  updateCategory(id: number, name: string, description: string) {
     const categoryData = {name, description};
-    return this.http.put<{response: any}>(BACKEND_URL + id, categoryData);
+    return this.http.put<{success: boolean, msg: string}>(BACKEND_URL + id, categoryData);
   }
 
-  deleteCategory(id: string) {
-    return this.http.delete<{response: any}>(BACKEND_URL + id);
+  deleteCategory(id: number) {
+    return this.http.delete<{success: boolean, msg: string}>(BACKEND_URL + id);
   }
 
 
   getTopicsByCategory() {
-    return this.http.get<{response: any}>(BACKEND_URL + 'join')
+    return this.http.get<{success: boolean, msg: string, topicsByCat: any[]}>(BACKEND_URL + 'join')
   }
 
 }

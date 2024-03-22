@@ -1,9 +1,9 @@
 import {
-  HttpErrorResponse,
-  HttpEvent,
-  HttpHandler,
-  HttpInterceptor,
-  HttpRequest,
+	HttpErrorResponse,
+	HttpEvent,
+	HttpHandler,
+	HttpInterceptor,
+	HttpRequest,
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
@@ -22,11 +22,11 @@ export class ErrorInterceptor implements HttpInterceptor {
     return next.handle(req).pipe(
       catchError((error: HttpErrorResponse) => {
         let errorMsg = 'An unkown error occured!';
-        if (error.message) {
-          errorMsg = error.message;
+        if (error.error.msg) {
+          errorMsg = error.error.msg;
         }
 
-        this.dialog.open(ErrorComponent, { data: { message: errorMsg } });
+        this.dialog.open(ErrorComponent, { data: { message: errorMsg }, width: "290px", height: "250px" });
         return throwError(error);
       })
     );

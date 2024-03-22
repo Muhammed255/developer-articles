@@ -21,20 +21,24 @@ export class TopicService {
 
   getAllTopics() {
     // const queryParams = `?pagesize=${TopicsPerPage}&page=${currentPage}`;
-    return this.http.get<{ response: any }>(BACKEND_URL + "get-all");
-  }
-  
-  getAdminTopics(TopicsPerPage, currentPage) {
-    const queryParams = `?pageSize=${TopicsPerPage}&page=${currentPage}`;
-    return this.http.get<{ response: any }>(BACKEND_URL + "admin-topics" + queryParams);
+    return this.http.get<{ success: boolean, msg: string, topics: any[], maxTopics: number }>(BACKEND_URL + "get-all");
   }
 
-  findOneTopic(id: string) {
-    return this.http.get<{ response: any }>(BACKEND_URL + id);
+  getAdminTopics(skip?: number, take?: number) {
+    const queryParams = `?skip=${skip}&take=${take}`;
+    return this.http.get<{ success: boolean, msg: string, topics: any[], maxTopics: number }>(BACKEND_URL + "admin-topics" + queryParams);
+  }
+
+  findOneTopic(id: number) {
+    return this.http.get<{ success: boolean, msg: string, topic: any }>(BACKEND_URL + id);
   }
 
   getUserTopics() {
     return this.http.get<{ success: boolean, msg: string, topics: any[] }>(BACKEND_URL + "all-topics");
+  }
+
+	getOtherTopics(currentTopicId: number) {
+    return this.http.get<{ success: boolean, msg: string, topics: any[] }>(BACKEND_URL + "get-other-topics/"+currentTopicId);
   }
 
   updateTopic(
@@ -53,7 +57,7 @@ export class TopicService {
       topicData.append("image", image, name);
     } else {
       topicData = {
-        _id: id,
+        id: id,
         name,
         description,
         categoryId,

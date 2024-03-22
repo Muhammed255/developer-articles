@@ -1,0 +1,112 @@
+<mat-spinner *ngIf="isLoading" style="margin: auto;"></mat-spinner>
+<mat-card class="comment" *ngFor="let comment of comments; let i = index">
+  <div
+    class="comment-header"
+    [routerLink]="['/account/articles', comment?.article?.id]"
+  >
+    <div
+      class="avatar"
+      [style.background-image]="'url(' + comment?.commentator?.imageUrl + ')'"
+    ></div>
+    <div class="info">
+      <div class="author">{{ comment?.commentator?.name }}</div>
+      <div class="username">&#64;{{ comment?.commentator?.username }}</div>
+    </div>
+    <div class="timestamp">{{ comment?.createDateTime | createDate }}</div>
+  </div>
+  <div class="comment-body" *ngIf="!isEditing || isSelectedIndex !== i">
+    {{ comment?.comment }}
+  </div>
+
+  <div *ngIf="isEditing && isSelectedIndex === i">
+    <input matInput [(ngModel)]="commentText" style="border: 1px solid #000;" />
+    <button mat-button color="primary" (click)="updateComment(comment.id)">
+      Save
+    </button>
+    <button mat-button color="warn" (click)="cancelEdit()">Cancel</button>
+  </div>
+
+  <div class="actions" *ngIf="authUser">
+    <button
+      mat-raised-button
+      class="action-button"
+      (click)="toggle(this, i)"
+    >
+      Reply
+    </button>
+		<ng-container *ngIf="authUser.id === comment.commentator.id">
+			<button
+				mat-button
+				color="primary"
+				class="action-button"
+				(click)="toggleEdit(i, comment.comment)"
+			>
+				Edit
+			</button>
+			<button
+				mat-button
+				color="warn"
+				class="action-button"
+				(click)="deleteComment(comment.id)"
+			>
+				Delete
+			</button>
+		</ng-container>
+  </div>
+	<div *ngIf="authUser">
+		<div
+			class="comment-box add-comment reply-box"
+			*ngIf="selectedReplyIndex == i && isAddingReply"
+		>
+			<span class="commenter-pic float-left">
+				<img
+					[src]="
+						authUser?.imageUrl
+							? authUser?.imageUrl
+							: 'assets/faces/face-0.jpg'
+					"
+					class="img-fluid"
+					style="height: 50px; width: 50px; border-radius: 50%"
+				/>
+			</span>
+			<span class="reply-form">
+				<form [formGroup]="commentReplyForm">
+					<mat-form-field style="width: 16rem;">
+						<input
+						matInput
+						type="text"
+						placeholder="Add a public reply"
+						formControlName="reply"
+					/>
+					</mat-form-field>
+					<input
+						type="hidden"
+						formControlName="commentId"
+						[ngModel]="comment.id"
+					/>
+					<button
+						type="submit"
+						mat-button
+						(click)="postReplyComment()"
+					>
+						Reply
+					</button>
+					<button
+						type="cancel"
+						class="reply-popup"
+						mat-button
+						(click)="toggle(this, i)"
+					>
+						Cancel
+					</button>
+				</form>
+			</span>
+		</div>
+		<div class="replies">
+			<app-reply
+			[authUser]="authUser"
+			[replies]="sliceReplies(comment)"
+			></app-reply>
+		</div>
+	</div>
+</mat-card>

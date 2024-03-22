@@ -1,20 +1,20 @@
-import { Component, Inject, OnInit } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
-import { MatDialogRef, MAT_DIALOG_DATA } from "@angular/material/dialog";
-import { mimeType } from "src/app/helpers/mime-type.validator";
+import { Component, Inject, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { mimeType } from 'src/app/helpers/mime-type.validator';
 import { ArticlePostService } from 'src/app/services/article-post.service';
 import { TopicService } from 'src/app/services/topic.service';
 
 @Component({
-  selector: "app-add-edit-post",
-  templateUrl: "./add-edit-post.component.html",
-  styleUrls: ["./add-edit-post.component.scss"],
+  selector: 'app-add-edit-post',
+  templateUrl: './add-edit-post.component.html',
+  styleUrls: ['./add-edit-post.component.scss'],
 })
 export class AddEditPostComponent implements OnInit {
-  htmlContent = "<h2>Hello</h2>";
+  htmlContent = '<h2>Hello</h2>';
+	isUpdate = false;
   imagePreview: string;
   form: FormGroup;
-  articleId: string;
   headerTitle = 'Add New Article';
 
   topics: any[];
@@ -31,37 +31,47 @@ export class AddEditPostComponent implements OnInit {
 
   ngOnInit() {
     this.initForm();
-    if(this.data) {
-      this.articleId = this.data.articleId;
+    if (this.data) {
+			console.log('====================================');
+			console.log(this.data);
+			console.log('====================================');
+      this.article = this.data.article;
+			this.isUpdate = true;
       this.data = {
         title: this.form.value.title,
         sub_title: this.form.value.sub_title,
         content: this.form.value.content,
         topicId: this.form.value.topicId,
-        article_image: this.form.value.article_image
-      }
-      this.setDataToForm(this.articleId);
-      this.headerTitle = 'Edit Article Post'
+        article_image: this.form.value.article_image,
+      };
+      this.form.patchValue({
+				title: this.article.title,
+				sub_title: this.article.sub_title,
+				content: this.article.content,
+				topicId: this.article.topic?.id,
+				article_image: this.article.article_image
+			})
+      this.headerTitle = 'Edit Article Post';
     }
-    this.topicService.getUserTopics().subscribe(data => {
-      if(data.success) {
+    this.topicService.getUserTopics().subscribe((data) => {
+      if (data.success) {
         this.topics = data.topics;
-        this.topicIndex = this.topics.findIndex(top => top?._id === this.topic?._id);
-        console.log(this.topicIndex)
-
+        this.topicIndex = this.topics.findIndex(
+          (top) => top?.id === this.topic?.id
+        );
       }
-    })
+    });
   }
 
-  setDataToForm(id) {
-    this.articleService.findOneArticle(id).subscribe(data => {
-      if(data.response.success) {
-        this.topic = data.response.article.topicId;
-        this.article = data.response.article;
-        this.form.patchValue(data.response.article);
-      }
-    })
-  }
+  // setDataToForm(id) {
+  //   this.articleService.findOneArticle(id).subscribe((data) => {
+  //     if (data.success) {
+  //       this.topic = data.article.topicId;
+  //       this.article = data.article;
+  //       this.form.patchValue(data.article);
+  //     }
+  //   });
+  // }
 
   onNoClick(): void {
     this.dialogRef.close();
@@ -86,14 +96,27 @@ export class AddEditPostComponent implements OnInit {
     });
   }
 
-  onImagePicked(event: Event) {
-    const file = (event.target as HTMLInputElement).files[0];
+  addNewArticle() {
+    this.articleService.newPost(
+      this.form.value.title,
+      this.form.value.sub_title,
+      this.form.value.content,
+      this.form.value.article_image,
+      this.form.value.topicId
+    ).subscribe(_ => {
+			this.dialogRef.close()
+		});
+		this.dialogRef.close();
+  }
+
+  onImagePicked(event: any) {
+    const file = event.target.files[0];
     this.form.patchValue({ article_image: file });
     this.form.get('article_image').updateValueAndValidity();
     const reader = new FileReader();
     reader.onload = () => {
-        this.imagePreview = reader.result as string;
+      this.imagePreview = reader.result as string;
     };
     reader.readAsDataURL(file);
-}
+  }
 }

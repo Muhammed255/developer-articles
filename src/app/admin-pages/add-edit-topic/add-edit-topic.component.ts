@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, NgForm, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { mimeType } from 'src/app/helpers/mime-type.validator';
 import { CategoryService } from 'src/app/services/category.service';
@@ -30,21 +30,21 @@ export class AddEditTopicComponent implements OnInit {
   ngOnInit() {
     this.initForm();
     this.route.paramMap.subscribe((paramMap) => {
-      if (paramMap.has("topicId")) {
+      if (Number(paramMap.has("topicId"))) {
         this.mode = "edit";
         this.topicId = paramMap.get("topicId");
         this.isLoading = true;
         this.topicService
-          .findOneTopic(paramMap.get("topicId"))
+          .findOneTopic(+paramMap.get("topicId"))
           .subscribe((data) => {
-            if (data.response.success) {
+            if (data.success) {
               this.isLoading = false;
-              this.topic = data.response.topic;
+              this.topic = data.topic;
               this.form.setValue({
                 name: this.topic.name,
                 description: this.topic.description,
                 image: this.topic.image,
-                categoryId: this.topic.categoryId
+                categoryId: this.topic.category.id
               });
             }
           });
@@ -54,8 +54,8 @@ export class AddEditTopicComponent implements OnInit {
       }
     });
     this.catService.getAllCategories().subscribe(data => {
-      if(data.response.success) {
-        this.categories = data.response.categories;
+      if(data.success) {
+        this.categories = data.categories;
       }
     })
   }
@@ -114,7 +114,7 @@ export class AddEditTopicComponent implements OnInit {
         }
       })
     }
-    
+
   }
 
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { NgForm } from "@angular/forms";
-import { Router, ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { CategoryService } from "src/app/services/category.service";
 
 @Component({
@@ -13,7 +13,7 @@ export class AddEditCategoryComponent implements OnInit {
 
   mode = "create";
   category: any;
-  catId: any;
+  catId: number;
 
   constructor(
     private catService: CategoryService,
@@ -25,12 +25,12 @@ export class AddEditCategoryComponent implements OnInit {
     this.route.paramMap.subscribe((paramMap) => {
       if (paramMap.has("catId")) {
         this.mode = "edit";
-        this.catId = paramMap.get("catId");
+        this.catId = Number(paramMap.get("catId"));
         this.catService
-          .findOneCategory(paramMap.get("catId"))
+          .findOneCategory(Number(paramMap.get("catId")))
           .subscribe((data) => {
-            if (data.response.success) {
-              this.category = data.response.category;
+            if (data.success) {
+              this.category = data.category;
             }
           });
       } else {
@@ -45,7 +45,7 @@ export class AddEditCategoryComponent implements OnInit {
       this.catService
         .newCategory(form.value.name, form.value.description)
         .subscribe((catData) => {
-          if (catData.response.success) {
+          if (catData.success) {
             this.router.navigate(["/admin/categories"]);
           }
         });
@@ -53,7 +53,7 @@ export class AddEditCategoryComponent implements OnInit {
       this.catService
         .updateCategory(this.catId, form.value.name, form.value.description)
         .subscribe((data) => {
-          if (data.response.success) {
+          if (data.success) {
             this.router.navigate(["/admin/categories"]);
           }
         });

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { FlashMessagesService } from 'angular2-flash-messages';
 import { emailValidator, matchingPasswords } from 'src/app/helpers/app-validators';
@@ -62,14 +62,14 @@ export class AdminSignupComponent implements OnInit {
         this.registerForm.value.bio
       )
       .subscribe((data) => {
-        if (data.response.success) {
-          this.flashMessagesService.show(data.response.message, {
+        if (data.success) {
+          this.flashMessagesService.show(data.msg, {
             cssClass: "alert-success",
             timeout: 3000,
           });
           this.router.navigateByUrl("/account/login");
         } else {
-          this.flashMessagesService.show(data.response.message, {
+          this.flashMessagesService.show(data.msg, {
             cssClass: "alert-danger",
             timeout: 3000,
           });

@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
+import { SearchService } from 'src/app/services/search.service';
 
 @Component({
   selector: 'search-form',
@@ -8,9 +9,12 @@ import { Router } from '@angular/router';
   styleUrls: ['./search.component.scss'],
 })
 export class SearchComponent implements OnInit {
-  searchForm: FormGroup;
 
-  constructor(private fb: FormBuilder, private router: Router) {}
+	@Input() searchString: string;
+  @Output() searchSubmitted: EventEmitter<any> = new EventEmitter();
+	searchForm: FormGroup;
+
+  constructor(private fb: FormBuilder, private router: Router, private searchService: SearchService) {}
 
   ngOnInit(): void {
     this.initSearchForm();
@@ -18,13 +22,27 @@ export class SearchComponent implements OnInit {
 
   initSearchForm() {
     this.searchForm = this.fb.group({
-      searchString: [''],
+      searchString: [this.searchString || ''],
+      postDateFrom: [''],
+      postDateTo: [''],
     });
   }
 
   onSubmitSearchForm() {
-    this.router.navigate(['/account/wall'], {
-      queryParams: { search: this.searchForm.get('searchString').value },
-    });
+		const postDateFrom = this.searchForm.get('postDateFrom').value;
+    const postDateTo = this.searchForm.get('postDateTo').value;
+
+		const searchString = this.searchForm.get('searchString').value;
+
+    this.searchService.setPostDateFrom(postDateFrom);
+    this.searchService.setPostDateTo(postDateTo);
+
+		this.searchSubmitted.emit({ searchString, postDateFrom, postDateTo });
+
+    // this.router.navigate(['/account/wall'], {
+    //   queryParams: {
+    //     search: this.searchForm.get('searchString').value,
+    //   },
+    // });
   }
 }
