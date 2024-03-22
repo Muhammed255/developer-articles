@@ -8,6 +8,18 @@
   }
 }
 
+.authUser, .userName {
+	margin: 0 0 0 0;
+}
+
+a {
+	text-decoration: none;
+}
+
+.homeLink:hover, .catlink:hover, .loginLink:hover, .signupLink:hover {
+	background-color: transparent;
+	color: #FFF;
+}
 
 mat-sidenav-content {
   overflow-y: hidden;

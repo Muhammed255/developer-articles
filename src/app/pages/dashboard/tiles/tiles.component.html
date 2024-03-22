@@ -1,44 +1,51 @@
 <div fxLayout="row wrap">
-    <div fxFlex="50" fxFlex.xl="16.6" fxFlex.lg="16.6" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">        
-        <mat-card class="gradient-green tile p-2"> 
-            <mat-icon>monetization_on</mat-icon> 
-            <h2>$33500</h2>         
-            <p>profit</p>            
+    <div fxFlex="50" fxFlex.xl="14.2" fxFlex.lg="14.2" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
+        <mat-card class="gradient-green tile p-2">
+            <mat-icon>view_list</mat-icon>
+            <h2>{{data?.categoriesCount}}</h2>
+            <p>Categories</p>
         </mat-card>
     </div>
-    <div fxFlex="50" fxFlex.xl="16.6" fxFlex.lg="16.6" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">        
-        <mat-card class="gradient-red tile p-2"> 
-            <mat-icon>thumb_up_alt</mat-icon> 
-            <h2>5300</h2>         
-            <p>likes</p>            
+    <div fxFlex="50" fxFlex.xl="14.2" fxFlex.lg="14.2" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
+        <mat-card class="gradient-red tile p-2">
+            <mat-icon>thumb_up_alt</mat-icon>
+            <h2>{{data?.likesCount}}</h2>
+            <p>Likes</p>
         </mat-card>
     </div>
-    <div fxFlex="50" fxFlex.xl="16.6" fxFlex.lg="16.6" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
+    <div fxFlex="50" fxFlex.xl="14.2" fxFlex.lg="14.2" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
         <mat-card class="gradient-orange tile p-2">
-            <mat-icon>group</mat-icon> 
-            <h2>14280</h2>         
-            <p>users</p> 
+            <mat-icon>thumb_down_alt</mat-icon>
+            <h2>{{data?.dislikesCount}}</h2>
+            <p>Dislikes</p>
         </mat-card>
     </div>
-    <div fxFlex="50" fxFlex.xl="16.6" fxFlex.lg="16.6" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
+    <div fxFlex="50" fxFlex.xl="14.2" fxFlex.lg="14.2" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
         <mat-card class="gradient-pink tile p-2">
-            <mat-icon>shopping_cart</mat-icon> 
-            <h2>7520</h2>         
-            <p>orders</p> 
+            <mat-icon>list</mat-icon>
+            <h2>{{data?.topicsCount}}</h2>
+            <p>Topics</p>
         </mat-card>
     </div>
-    <div fxFlex="50" fxFlex.xl="16.6" fxFlex.lg="16.6" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
+    <div fxFlex="50" fxFlex.xl="14.2" fxFlex.lg="14.2" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
         <mat-card class="gradient-gray tile p-2">
-            <mat-icon>pie_chart</mat-icon> 
-            <h2>$2700</h2>         
-            <p>tax</p> 
+            <mat-icon>local_post_office</mat-icon>
+            <h2>{{data?.articlesCount}}</h2>
+            <p>Articles</p>
         </mat-card>
-    </div>  
-    <div fxFlex="50" fxFlex.xl="16.6" fxFlex.lg="16.6" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
+    </div>
+    <div fxFlex="50" fxFlex.xl="14.2" fxFlex.lg="14.2" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
         <mat-card class="gradient-brown tile p-2">
-            <mat-icon>save_alt</mat-icon> 
-            <h2>12700</h2>         
-            <p>downloads</p> 
+            <mat-icon>comment</mat-icon>
+            <h2>{{data?.commentsCount}}</h2>
+            <p>Comments</p>
         </mat-card>
-    </div>      
+    </div>
+    <div fxFlex="50" fxFlex.xl="14.2" fxFlex.lg="14.2" fxFlex.md="33.3" fxFlex.sm="33.3" class="p-2">
+        <mat-card class="gradient-brown tile p-2">
+            <mat-icon>reply</mat-icon>
+            <h2>{{data?.repliesCount}}</h2>
+            <p>Replies</p>
+        </mat-card>
+    </div>
 </div>

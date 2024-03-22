@@ -11,10 +11,14 @@
     </div>
     <p>{{ topic.description }}</p>
     <mat-action-row *ngIf="userIsAuthenticated">
-      <a mat-button color="primary" [routerLink]="['/admin/topic', topic._id]"
-        >EDIT</a
+      <button
+        mat-button
+        color="primary"
+        [routerLink]="['/admin/topic', topic.id]"
       >
-      <button mat-button color="warn" (click)="onDelete(topic._id)">
+        EDIT
+      </button>
+      <button mat-button color="warn" (click)="onDelete(topic.id)">
         DELETE
       </button>
     </mat-action-row>
@@ -22,10 +26,11 @@
 </mat-accordion>
 
 <mat-paginator
-  [length]="totalTopics"
-  [pageSize]="TopicsPerPage"
-  [pageIndex]="currentPage"
+  [length]="topics_count"
+  [pageSize]="pageSize"
+  [pageIndex]="pageIndex"
   [pageSizeOptions]="pageSizeOptions"
+	[showFirstLastButtons]="showFirstLastButtons"
   (page)="onChangedPage($event)"
   *ngIf="topics?.length > 0"
 ></mat-paginator>

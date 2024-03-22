@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import { MenuService } from 'src/app/services/menu.service';
 
 @Component({
@@ -9,11 +9,12 @@ import { MenuService } from 'src/app/services/menu.service';
 })
 export class SidenavComponent implements OnInit {
   public menuItems:Array<any>;
+	@Input() user: any;
   constructor(public menuService:MenuService){
   }
 
   ngOnInit() {
-    this.menuItems = this.menuService.getVerticalMenuItems();    
+    this.menuItems = this.menuService.getVerticalMenuItems();
   }
 
   public closeSubMenus(){

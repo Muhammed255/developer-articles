@@ -1,10 +1,9 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { AddEditPostComponent } from 'src/app/admin-pages/add-edit-post/add-edit-post.component';
-import { ArticlePostService } from 'src/app/services/article-post.service';
 import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
@@ -15,58 +14,50 @@ import { AuthService } from 'src/app/services/auth.service';
 export class AdminPagesComponent implements OnInit, OnDestroy {
   auth_user: any;
   menu = 'vertical';
+  user: any | null = null;
+  private userSubscription: Subscription;
 
-  articleSubListener: Subscription;
+  toggleSearchBar = false;
 
   constructor(
     private cd: ChangeDetectorRef,
     public authService: AuthService,
     public dialog: MatDialog,
-    private articleService: ArticlePostService,
-    private snackBar: MatSnackBar
+		private router: Router
   ) {}
 
   ngOnInit() {
-    this.authService
-      .findUserById(this.authService.getUserId())
-      .subscribe((data) => {
-        if (data.response.success) {
-          this.auth_user = data.response.user;
-          this.cd.detectChanges();
-        }
-      });
+		if(localStorage.getItem('userId')) {
+			this.authService.findUserById(+localStorage.getItem('userId'))
+			this.userSubscription = this.authService.user$.subscribe((user) => {
+				this.auth_user = user;
+				// this.authService.getUserSubject().next(data.user);
+				this.cd.detectChanges();
+				console.log('Change detection triggered!');
+			});
+		}
+  }
+
+	openSettings(user: any) {
+		this.router.navigate(["admin", user.username, "settings"], {state: {user: user}})
   }
 
   addPostDialog() {
     const dialogRef = this.dialog.open(AddEditPostComponent, {
       width: '100%',
-      height: '685px',
+      height: '44rem',
     });
 
-    dialogRef.afterClosed().pipe(filter(res => typeof res === "object")).subscribe((result) => {
-      console.log(result);
-      this.articleService.newPost(
-        result.title,
-        result.sub_title,
-        result.content,
-        result.article_image,
-        result.topicId
-      );
-      // .subscribe((data) => {
-      //   if (data.response.success) {
-      //     this.articleService.getArticles();
-      //     this.articleSubListener = this.articleService.getArticlesStatusListener().subscribe((artData: {articles: any[]}) => {
-      //         artData.articles.push(data.response.article);
-      //         this.snackBar.open(data.response.msg, "success", {
-      //           duration: 5000,
-      //         });
-      //     });
-      //   }
-      // });
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(filter((res) => typeof res === 'object'))
+      .subscribe((result) => {
+        console.log(result);
+      });
   }
 
-  ngOnDestroy() {
-    this.articleSubListener.unsubscribe();
+  ngOnDestroy(): void {
+    console.log('AdminPagesComponent destroyed');
+    this.userSubscription.unsubscribe();
   }
 }

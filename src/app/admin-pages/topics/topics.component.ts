@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Subscription } from 'rxjs';
 import { AuthService } from 'src/app/services/auth.service';
 import { TopicService } from 'src/app/services/topic.service';
 
@@ -8,31 +9,35 @@ import { TopicService } from 'src/app/services/topic.service';
   templateUrl: './topics.component.html',
   styleUrls: ['./topics.component.scss']
 })
-export class TopicsComponent implements OnInit {
+export class TopicsComponent implements OnInit, OnDestroy {
 
-  totalTopics = 0;
-  TopicsPerPage = 2;
-  currentPage = 1;
-  pageSizeOptions = [2, 5, 10, 20];
+  pageSizeOptions = [1, 5, 10, 20];
+	topics_count = 0;
+  pageSize = 1;
+	pageIndex = 0;
+  showFirstLastButtons = true;
   isLoading = false;
   topics: any[];
   userIsAuthenticated = false;
+	authSubscription: Subscription
 
   constructor(private topicService: TopicService, private authService: AuthService) { }
 
   ngOnInit() {
-    this.getTopics(this.TopicsPerPage, this.currentPage);
-    this.userIsAuthenticated = this.authService.getIsAuth();
+    this.getTopics(this.pageIndex * this.pageSize, this.pageSize);
+    this.authSubscription = this.authService.getAuthStatusListener().subscribe(isAuth => {
+			this.userIsAuthenticated = isAuth;
+		});
   }
 
 
   getTopics(perPage, current) {
     this.isLoading = true;
     this.topicService.getAdminTopics(perPage, current).subscribe(data => {
-      if(data.response.success) {
+      if(data.success) {
         this.isLoading = false;
-        this.topics = data.response.topics;
-        this.totalTopics = this.topics.length;
+        this.topics = data.topics;
+        this.topics_count = data.maxTopics;
       }
     })
   }
@@ -45,16 +50,21 @@ export class TopicsComponent implements OnInit {
     this.topicService.deleteTopic(id).subscribe(data => {
       if(data.success) {
         this.isLoading = false;
-        this.getTopics(this.TopicsPerPage, this.currentPage);
+        this.getTopics(this.pageIndex * this.pageSize, this.pageSize);
       }
     })
   }
 
   onChangedPage(pageData: PageEvent) {
     this.isLoading = true;
-    this.currentPage = pageData.pageIndex + 1;
-    this.TopicsPerPage = pageData.pageSize;
-    this.getTopics(this.TopicsPerPage, this.currentPage);
+		this.topics_count = pageData.length;
+		const skip = pageData.pageIndex * pageData.pageSize;
+    const take = pageData.pageSize;
+    this.getTopics(skip, take);
   }
+
+	ngOnDestroy(): void {
+		if(this.authSubscription) this.authSubscription.unsubscribe();
+	}
 
 }

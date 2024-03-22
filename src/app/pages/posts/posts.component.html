@@ -1,22 +1,43 @@
 <div class="container">
   <div class="row">
-    <div class="col-8">
-      <mat-card class="example-card mb-3" *ngFor="let art of articles">
+    <div class="col-lg-8 col-md-12">
+      <app-article-card
+        *ngFor="let article of articles"
+        [article]="article"
+        [auth_user]="auth_user"
+				(likeArticle)="onLikeArticle(article.id)"
+				(dislikeArticle)="onDisLikeArticle(article.id)"
+				(addOrRemoveBookmark)="onAddToBookmarksClicked(article)"
+				(editArticle)="onEditPost(article)"
+				(deleteArticle)="onDeleteArticle(article.id)"
+      ></app-article-card>
+      <!-- <mat-card class="example-card mb-3" *ngFor="let art of articles">
         <mat-card-header>
           <div
             mat-card-avatar
+            [routerLink]="['/account', art?.user?.username]"
             [ngStyle]="{
-              'background-image': ' url(' + art.article_image + ')',
-              'background-size': 'cover'
+              'background-image':
+                'url(' +
+                (art.user?.imageUrl ? art.user?.imageUrl : defaultImage) +
+                ')',
+              'background-size': 'cover',
+              cursor: 'pointer'
             }"
             class="example-header-image"
           ></div>
-          <mat-card-title
-            class="title"
-            [routerLink]="['/account/articles', art._id]"
-            >{{ art.title }}</mat-card-title
+          <mat-card-title class="title">
+            <a
+              style="cursor: pointer; text-decoration: none;color: #000000;"
+              [routerLink]="['/account/articles', art.id]"
+              >{{ art.title }}</a
+            ></mat-card-title
           >
-          <mat-card-subtitle>{{ art?.autherId.name }}</mat-card-subtitle>
+          <mat-card-subtitle
+            [routerLink]="['/account', art?.user?.username]"
+            style="cursor: pointer"
+            >{{ art?.user.name }}</mat-card-subtitle
+          >
           <span class="ml-auto mr-3" *ngIf="auth_user">
             <button
               mat-icon-button
@@ -26,12 +47,20 @@
               <mat-icon>more_vert</mat-icon>
             </button>
             <mat-menu #menu="matMenu">
-              <button mat-menu-item (click)="onAddToBookmarksClicked(art._id)">
-                <mat-icon>{{
-                  auth_user.bookmarks.includes(art._id) ? "star" : "star_border"
+              <button *ngIf="auth_user.id === art.user.id" mat-menu-item (click)="onEditPost(art)">
+                <mat-icon color="primary">edit</mat-icon>
+                <span>EDIT</span>
+              </button>
+              <button *ngIf="auth_user.id === art.user.id" mat-menu-item (click)="onDeleteArticle(art.id)">
+                <mat-icon color="warn">delete</mat-icon>
+                <span>DELETE</span>
+              </button>
+              <button mat-menu-item (click)="onAddToBookmarksClicked(art)">
+                <mat-icon color="accent">{{
+                  checkIfArticleBookmarked(art) ? "star" : "star_border"
                 }}</mat-icon>
                 <span>{{
-                  auth_user.bookmarks.includes(art._id)
+                  checkIfArticleBookmarked(art)
                     ? "Remove From Bookmarks"
                     : "Add To Bookmarks"
                 }}</span>
@@ -41,7 +70,6 @@
         </mat-card-header>
         <img
           mat-card-image
-          routerLink="/test"
           class="img-article"
           [src]="art.article_image"
           [alt]="'title'"
@@ -54,22 +82,25 @@
             <button
               mat-button
               color="primary"
-              [disabled]="disableIfLiked(art)"
-              (click)="onLikeArticle(art?._id)"
+              [disabled]="disableIfLiked(art).isLiked"
+              (click)="onLikeArticle(art?.id)"
             >
               <mat-icon
                 class="mat-18 mb-3"
                 [svgIcon]="
-                  disableIfLiked(art) ? 'thumb_up_filled' : 'thumb_up_outline'
+                  disableIfLiked(art).isLiked
+                    ? 'thumb_up_filled'
+                    : 'thumb_up_outline'
                 "
               ></mat-icon>
-              Likes {{ art.likes }}
+              Likes {{ disableIfLiked(art).count }}
             </button>
             <div class="dropdown-content">
               <a
-                *ngFor="let liker of art.likedBy"
-                [routerLink]="['/account', liker.username]"
-                >{{ liker.name }}</a
+                style="width: max-content"
+                *ngFor="let liker of allLikedOrDisliked(art).likers"
+                [routerLink]="['/account', liker.user.username]"
+                >{{ liker.user.name }}</a
               >
             </div>
           </div>
@@ -77,51 +108,65 @@
             <button
               mat-button
               color="primary"
-              [disabled]="disableIfDisLiked(art)"
-              (click)="onDisLikeArticle(art?._id)"
+              [disabled]="disableIfDisLiked(art).isdisLiked"
+              (click)="onDisLikeArticle(art?.id)"
             >
               <mat-icon
                 class="mat-18 mb-2"
                 [svgIcon]="
-                  disableIfDisLiked(art)
+                  disableIfDisLiked(art).isdisLiked
                     ? 'thumb_down_filled'
                     : 'thumb_down_outline'
                 "
               ></mat-icon>
-              DisLikes {{ art.dislikes }}
+              DisLikes {{ disableIfDisLiked(art).count }}
             </button>
             <div class="dropdown-content">
               <a
-                [routerLink]="['/account', disliker.username]"
-                *ngFor="let disliker of art.dislikedBy"
-                >{{ disliker.name }}</a
+                *ngFor="let disliker of allLikedOrDisliked(art).dislikers"
+                [routerLink]="['/account', disliker.user.username]"
+                >{{ disliker.user.name }}</a
               >
             </div>
           </div>
-          <button mat-button>
+          <button mat-button (click)="commentsFragment(art.id)">
             <mat-icon class="mat-18" color="primary">comment</mat-icon> Comment
           </button>
-          <!-- <button mat-button>
-            <span class="fa fa-stack">
-              <i class="fa fa-shield fa-stack-2x"></i>
-              <i class="fa fa-square fa-stack-bottom-right fa-inverse"></i>
-              <i class="fa fa-check-square fa-stack-bottom-right"></i>
-            </span>
-            Trust
-          </button> -->
-          <a mat-button class="ml-auto mr-3">
-            {{ art?.comments.length }} Comments
+          <a
+            mat-button
+            class="ml-auto mr-3"
+						style="text-decoration: none;"
+            (click)="openCommentsDialog(art.comments)"
+          >
+            {{ art?.comments?.length }} Comments
           </a>
         </mat-card-actions>
-      </mat-card>
+      </mat-card> -->
     </div>
-    <div class="col-4">
+    <div class="col-lg-4 col-md-12">
       <div class="card my-2">
         <h5 class="card-header">Search</h5>
         <div class="card-body">
-          <search-form></search-form>
+          <search-form
+            [searchString]="searchString"
+            (searchSubmitted)="onSearchSubmitted($event)"
+          ></search-form>
         </div>
       </div>
     </div>
   </div>
+</div>
+
+<div class="paginator-container">
+  <mat-paginator
+    #paginator
+    (page)="handlePageEvent($event)"
+    [length]="articles_count"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="pageSizeOptions"
+    [showFirstLastButtons]="showFirstLastButtons"
+    [pageIndex]="pageIndex"
+    aria-label="Select page"
+  >
+  </mat-paginator>
 </div>

@@ -21,8 +21,8 @@
       <!-- Author -->
       <p class="lead">
         by
-        <a href="#">{{ article?.autherId.name }}</a>
-        <span class="mt-1 float-right" style="font-size: 16px">Posted on {{ article?.created | date }}</span>
+        <a [routerLink]="['/account', article?.user.username]">{{ article?.user.name }}</a>
+        <span class="mt-1 float-right" style="font-size: 16px">Posted on {{ article?.createDateTime | date }}</span>
       </p>
       <hr />
       <img
@@ -40,21 +40,21 @@
       <hr />
 
       <div [innerHtml]="article?.content"></div>
-
+			<div #commentsSection id="commentsSection" class="comments-section">
       <ul class="list-group">
         <li class="list-group-item" *ngIf="auth_user">
           <button
             type="button"
             name="button"
             class="btn btn-sm btn-danger"
-            (click)="draftComment(article?._id)"
-            [disabled]="newComment.indexOf(article?._id) > -1"
+            (click)="draftComment(article?.id)"
+            [disabled]="newComment.indexOf(article?.id) > -1"
           >
             Post Comment
           </button>
           <br />
           <br />
-          <div *ngIf="newComment.indexOf(article?._id) > -1">
+          <div *ngIf="newComment.indexOf(article?.id) > -1">
             <form [formGroup]="commentForm">
               <textarea
                 id="comment_form"
@@ -99,7 +99,7 @@
                 type="submit"
                 name="button"
                 class="btn btn-sm btn-info"
-                (click)="postComment(article?._id)"
+                (click)="postComment(article?.id)"
               >
                 Post
               </button>
@@ -107,7 +107,7 @@
                 type="button"
                 name="button"
                 class="btn btn-sm btn-danger"
-                (click)="cancelSubmission(article?._id)"
+                (click)="cancelSubmission(article?.id)"
               >
                 Cancel
               </button>
@@ -116,30 +116,31 @@
         </li>
         <li
           *ngIf="
-            enabledComments.indexOf(article?._id) === -1 &&
+            enabledComments.indexOf(article?.id) === -1 &&
             article?.comments.length > 0
           "
           class="list-group-item"
         >
-          <span (click)="expand(article?._id)" class="show_comments">
+          <span (click)="expand(article?.id)" class="show_comments">
             Show comments&nbsp;&nbsp;
-            <mat-icon>comment</mat-icon>
+            <mat-icon class="cmt-icon">comment</mat-icon>
           </span>
         </li>
 
         <li
-          *ngIf="enabledComments.indexOf(article?._id) > -1"
+          *ngIf="enabledComments.indexOf(article?.id) > -1"
           class="list-group-item"
           style="margin-bottom: 28px;"
         >
-          <span (click)="collapse(article?._id)">
+          <span (click)="collapse(article?.id)">
             Hide Comments&nbsp;&nbsp;
             <mat-icon style="position: relative;top: 8px;">comment</mat-icon>
           </span>
         </li>
 
-        <div *ngIf="enabledComments.indexOf(article?._id) > -1">
-          <li
+        <div *ngIf="enabledComments.indexOf(article?.id) > -1">
+					<app-comment [articleId]="article.id" [authUser]="auth_user" [slice_amount]="0"></app-comment>
+          <!-- <li
             *ngFor="let comment of article?.comments; let i = index"
             class="list-group-item"
             style="bottom: 30px"
@@ -163,32 +164,16 @@
                 >
                   <div class="panel-heading">
                     <strong>{{ comment?.commentator.name }}</strong>
-                    <small>@{{ comment?.commentator.username }}</small>
+                    <small>{{ comment?.commentator.username }}</small>
                     <span
                       class="text-muted"
                       style="position: relative; left: 5rem"
-                      >{{ comment?.comment_date | date }}</span
+                      >{{ comment?.createDateTime | date }}</span
                     >
                   </div>
                   <div class="panel-body" style="color: #000">
                     {{ comment.comment }}
                   </div>
-                  <!-- <button
-                    [disabled]="comment?.likedBy.indexOf(auth_user._id) > -1"
-                    class="comment-like"
-                    (click)="onLikeComment(article._id, comment._id)"
-                  >
-                    <mat-icon>thumb_up</mat-icon>
-                    {{ comment?.likes }}
-                  </button>
-                  <button
-                    [disabled]="comment?.dislikedBy.indexOf(auth_user._id) > -1"
-                    class="comment-dislike"
-                    (click)="ondislikeComment(article._id, comment._id)"
-                  >
-                    <mat-icon>thumb_down</mat-icon>
-                    {{ comment?.dislikes }}
-                  </button> -->
                   <button
                     mat-mini-fab
                     *ngIf="auth_user"
@@ -200,7 +185,7 @@
                   <ul class="media-list" style="padding: 11px 0px 0 0;">
                     <li class="media" *ngFor="let reply of comment?.replies">
                       <a
-                        [routerLink]="['/account/profile', reply?.replier._id]"
+                        [routerLink]="['/account', reply?.replier.username]"
                         class="pull-left"
                       >
                         <img
@@ -218,7 +203,7 @@
                         <strong
                           [routerLink]="[
                             '/account/profile',
-                            reply?.replier._id
+                            reply?.replier.id
                           ]"
                           class="username"
                           >{{ reply?.replier.name }}</strong
@@ -226,14 +211,14 @@
                         <small
                           [routerLink]="[
                             '/account/profile',
-                            reply?.replier._id
+                            reply?.replier.id
                           ]"
                           class="text-success"
-                          >@{{ reply?.replier.username }}</small
+                          >{{ reply?.replier.username }}</small
                         >
                         <span class="text-muted float-right">
                           <small class="text-muted">{{
-                            reply?.reply_date | date
+                            reply?.createDateTime | date
                           }}</small>
                         </span>
                         <p style="color: #000; position: relative; left: 8px">
@@ -271,12 +256,12 @@
                           <input
                             type="hidden"
                             formControlName="commentId"
-                            [ngModel]="comment._id"
+                            [ngModel]="comment.id"
                           />
                           <button
                             type="submit"
                             mat-button
-                            (click)="postReplyComment(article._id)"
+                            (click)="postReplyComment(article.id)"
                           >
                             Reply
                           </button>
@@ -295,18 +280,18 @@
                 </div>
               </div>
             </div>
-          </li>
+          </li> -->
         </div>
       </ul>
-
+			</div>
     <div *ngIf="!auth_user" class="unauth">Sign In to Comment in this Article</div>
     </div>
 
-    
+
     <!-- Sidebar Widgets Column -->
     <div class="col-lg-4">
-      <p>Likes : {{ article?.likes }}</p>
-      <p>Dislikes : {{ article?.dislikes }}</p>
+      <p>Likes : {{ countLikes }}</p>
+      <p>Dislikes : {{ countdisLikes }}</p>
       <p>comments : {{ article?.comments.length }}</p>
 
       <div class="card mb-4">
@@ -322,7 +307,7 @@
                 placeholder="Enter search term..."
                 aria-describedby="button-search"
               />
-  
+
               <button id="button-search" class="btn btn-primary" type="button">
                 Go!
               </button>
@@ -338,7 +323,7 @@
           <div class="row">
             <div class="col-sm-12">
               <ul class="list-unstyled mb-0">
-                <li><a [routerLink]="[ '/account/topic-articles', article?.topicId?._id ]">{{article?.topicId?.name}}</a></li>
+                <li><a [routerLink]="[ '/account/topic-articles', article?.topicId?.id ]">{{article?.topic?.name}}</a></li>
               </ul>
             </div>
           </div>
@@ -352,7 +337,7 @@
           <div class="row">
             <div class="col-sm-12">
               <ul class="list-unstyled mb-0">
-                <li *ngFor="let topic of topics"><a [routerLink]="[ '/account/topic-articles', topic?._id ]">{{topic?.name}}</a></li>
+                <li *ngFor="let topic of topics"><a [routerLink]="[ '/account/topic-articles', topic?.id ]">{{topic?.name}}</a></li>
               </ul>
             </div>
           </div>
@@ -361,3 +346,20 @@
     </div>
   </div>
 </div>
+
+<!-- <button
+                    [disabled]="comment?.likedBy.indexOf(auth_user.id) > -1"
+                    class="comment-like"
+                    (click)="onLikeComment(article.id, comment.id)"
+                  >
+                    <mat-icon>thumb_up</mat-icon>
+                    {{ comment?.likes }}
+                  </button>
+                  <button
+                    [disabled]="comment?.dislikedBy.indexOf(auth_user.id) > -1"
+                    class="comment-dislike"
+                    (click)="ondislikeComment(article.id, comment.id)"
+                  >
+                    <mat-icon>thumb_down</mat-icon>
+                    {{ comment?.dislikes }}
+                  </button> -->

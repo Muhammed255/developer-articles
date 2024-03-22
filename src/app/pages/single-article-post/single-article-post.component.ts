@@ -1,9 +1,11 @@
-import { Component, OnInit } from "@angular/core";
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
 import { FlashMessagesService } from "angular2-flash-messages";
+import { Subscription } from "rxjs";
 import { ArticlePostService } from "src/app/services/article-post.service";
 import { AuthService } from "src/app/services/auth.service";
+import { CommentReplyService } from "src/app/services/comment-reply.service";
 import { TopicService } from "src/app/services/topic.service";
 
 @Component({
@@ -11,9 +13,9 @@ import { TopicService } from "src/app/services/topic.service";
   templateUrl: "./single-article-post.component.html",
   styleUrls: ["./single-article-post.component.scss"],
 })
-export class SingleArticlePostComponent implements OnInit {
+export class SingleArticlePostComponent implements OnInit, AfterViewInit, OnDestroy {
   article: any;
-
+	@ViewChild('commentsSection') commentsSection: ElementRef;
   topics: any[] = [];
 
   show_reply_box: boolean = false;
@@ -25,6 +27,12 @@ export class SingleArticlePostComponent implements OnInit {
   commentReplyForm: FormGroup;
   searchForm: FormGroup;
 
+	countLikes = 0;
+	countdisLikes = 0;
+
+
+	private userSubscription: Subscription;
+
   constructor(
     private articleService: ArticlePostService,
     private authService: AuthService,
@@ -32,7 +40,9 @@ export class SingleArticlePostComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private flasMessages: FlashMessagesService,
-    private topicService: TopicService
+    private topicService: TopicService,
+		private cd: ChangeDetectorRef,
+		private commentService: CommentReplyService
   ) {}
 
   ngOnInit() {
@@ -40,26 +50,32 @@ export class SingleArticlePostComponent implements OnInit {
     this.createCommentForm();
     this.createCommentReplyForm();
     this.initSearchForm();
-    if(localStorage.getItem('userId')) {
-      this.authService.findUserById(localStorage.getItem('userId')).subscribe(result => {
-        this.auth_user = result.response.user;
-      })
+		this.getAuthUser()
+  }
+
+	ngAfterViewInit(): void {
+    // Scroll to the comments section when the component has finished initializing
+    if (this.route.snapshot.fragment === 'commentsSection') {
+      setTimeout(() => { // Use setTimeout to ensure the element is fully rendered
+        this.commentsSection.nativeElement.scrollIntoView({ behavior: 'smooth' });
+      }, 1500);
     }
-    this.getTopics();
   }
 
   findArticle() {
     this.route.paramMap.subscribe((paramMap) => {
-      if (!paramMap.has("articleId")) {
+      if (!+paramMap.has("articleId")) {
         return;
       }
       this.articleService
-        .findOneArticle(paramMap.get("articleId"))
+        .findOneArticle(+paramMap.get("articleId"))
         .subscribe((data) => {
-          if (data.response.success) {
-            this.article = data.response.article;
+          if (data.success) {
+            this.article = data.article;
+						this.countArticleLikes(this.article.id)
+						this.getTopics(this.article?.topic.id);
           } else {
-            this.flasMessages.show(data.response.msg, {
+            this.flasMessages.show(data.msg, {
               cssClass: "alert-danger",
               timeout: 5000,
             });
@@ -68,8 +84,28 @@ export class SingleArticlePostComponent implements OnInit {
     });
   }
 
-  getTopics() {
-    this.topicService.getUserTopics().subscribe(res => {
+	getAuthUser() {
+		if (localStorage.getItem('userId')) {
+      this.authService.findUserById(+localStorage.getItem('userId'));
+      this.userSubscription = this.authService.user$.subscribe((user) => {
+        this.auth_user = user;
+        this.cd.detectChanges();
+        console.log('Change detection triggered!');
+      });
+    }
+	}
+
+	countArticleLikes(articleId) {
+		this.articleService.getAllArticlesBy({postId: articleId, type: 'like'}).subscribe(res => {
+			this.countLikes = res.articles.length;
+		})
+		this.articleService.getAllArticlesBy({postId: articleId, type: 'dislike'}).subscribe(res => {
+			this.countdisLikes = res.articles.length;
+		})
+	}
+
+  getTopics(topicId: number) {
+    this.topicService.getOtherTopics(topicId).subscribe(res => {
       if(res.success) {
         this.topics = res.topics;
       }
@@ -105,7 +141,6 @@ export class SingleArticlePostComponent implements OnInit {
         ]),
       ],
       commentId: [""],
-      articleId: [""],
     });
   }
 
@@ -149,25 +184,27 @@ export class SingleArticlePostComponent implements OnInit {
     this.disableCommentForm(); // Disable form while saving comment to database
     const comment = this.commentForm.get("comment").value; // Get the comment value to pass to service function
     // Function to save the comment to the database
-    this.articleService.commentArticle(id, comment).subscribe((data) => {
-      this.findArticle();
-      const index = this.newComment.indexOf(id); // Get the index of the blog id to remove from array
-      this.newComment.splice(index, 1); // Remove id from the array
-      this.enableCommentForm(); // Re-enable the form
-      this.commentForm.reset(); // Reset the comment form
-      if (this.enabledComments.indexOf(id) < 0) this.expand(id); // Expand comments for user on comment submission
-    });
+    this.commentService.commentArticle(id, comment)
+		// .subscribe((data) => {
+    //   this.article.comments.push(data.newComment)
+		// 	this.findArticle()
+		// 	this.cd.detectChanges();
+    // });
+		const index = this.newComment.indexOf(id); // Get the index of the blog id to remove from array
+		this.newComment.splice(index, 1); // Remove id from the array
+		this.enableCommentForm(); // Re-enable the form
+		this.commentForm.reset(); // Reset the comment form
+		if (this.enabledComments.indexOf(id) < 0) this.expand(id); // Expand comments for user on comment submission
   }
 
-  postReplyComment(articleId) {
+  postReplyComment() {
     const reply = this.commentReplyForm.get("reply").value;
     const commentId = this.commentReplyForm.get("commentId").value;
-    this.articleService
-      .postCommentReply(articleId, commentId, reply)
+    this.commentService
+      .postCommentReply(commentId, reply)
       .subscribe((data) => {
         this.findArticle();
         this.commentReplyForm.reset();
-        console.log(data)
       });
   }
 
@@ -182,10 +219,9 @@ export class SingleArticlePostComponent implements OnInit {
     this.enabledComments.splice(index, 1); // Remove id from array
   }
 
-  getDiferenceInDays(theDate: any): number {
-    return (
-      Math.abs(theDate.getHours() - new Date().getTime()) /
-      (1000 * 60 * 60 * 24)
-    );
-  }
+	ngOnDestroy(): void {
+		if(this.userSubscription) {
+			this.userSubscription.unsubscribe();
+		}
+	}
 }

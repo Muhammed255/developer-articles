@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subscription } from 'rxjs';
@@ -15,69 +15,67 @@ import { AddEditPostComponent } from '../add-edit-post/add-edit-post.component';
 export class PostsComponent implements OnInit, OnDestroy {
   articles: any[] = [];
   articleSubListener: Subscription;
+  defaultImage = 'assets/faces/face-0.jpg';
+  userSubscription: Subscription;
 
+  auth_user: any;
   constructor(
     private articleService: ArticlePostService,
     private authService: AuthService,
     public dialog: MatDialog,
-    public snackBar: MatSnackBar
+    public snackBar: MatSnackBar,
+		private cd: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
+    if (localStorage.getItem('userId')) {
+      this.authService.findUserById(+localStorage.getItem('userId'));
+      this.userSubscription = this.authService.user$.subscribe((user) => {
+        this.auth_user = user;
+				this.cd.detectChanges()
+      });
+    }
     this.getArticles();
   }
 
   getArticles() {
-    this.articleService.getSpceficAdminArticles(this.authService.getUserId());
+    this.articleService.getSpceficAdminArticles(this.auth_user.id);
 
     this.articleSubListener = this.articleService
       .getArticlesStatusListener()
-      .subscribe((articleData: { articles: any[] }) => {
-        this.articles = articleData.articles;
+      .subscribe((result) => {
+        this.articles = result.articles;
       });
   }
 
-  editPostDialog(id: string) {
+  editPostDialog(post: any) {
     const dialogRef = this.dialog.open(AddEditPostComponent, {
       width: '100%',
-      height: '685px',
-      data: { articleId: id },
+      height: '44rem',
+      data: { article: post },
     });
 
-    dialogRef.afterClosed().pipe(filter(res => typeof res === "object")).subscribe((result) => {
-      
-      this.articleService.updateArticle(
-        id,
-        result?.title,
-        result?.sub_title,
-        result?.content,
-        result?.article_image,
-        result?.articleId
-      );
-      // .subscribe((data) => {
-      //   if (data.response.success) {
-      //     this.getArticles();
-      //     this.snackBar.open(data.response.msg, 'success', {
-      //       duration: 5000,
-      //     });
-      //   }
-      // });
-    });
+    dialogRef
+      .afterClosed()
+      .pipe(filter((res) => typeof res === 'object'))
+      .subscribe((result) => {
+        this.articleService.updateArticle(
+          post.id,
+          result?.title,
+          result?.sub_title,
+          result?.content,
+          result?.article_image,
+          result?.articleId
+        );
+      });
   }
 
-  onDeleteArticle(id: string) {
+  onDeleteArticle(id: number) {
     this.articleService.deleteArticle(id);
-    // .subscribe((data) => {
-    //   if (data.response.success) {
-    //     this.getArticles();
-    //     this.snackBar.open(data.response.msg, 'success', {
-    //       duration: 5000,
-    //     });
-    //   }
-    // });
   }
 
   ngOnDestroy() {
-    this.articleSubListener.unsubscribe();
+    if (this.articleSubListener) this.articleSubListener.unsubscribe();
+    if (this.userSubscription) this.userSubscription.unsubscribe();
   }
 }

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { AuthService } from 'src/app/services/auth.service';
 
 @Component({
   selector: 'app-tiles',
@@ -7,9 +8,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class TilesComponent implements OnInit {
 
-  constructor() { }
+	data: any;
+
+  constructor(private authService: AuthService) { }
 
   ngOnInit() {
+		this.authService.getAdminDashboard().subscribe(res => {
+			this.data = res.data;
+		})
   }
 
 }

@@ -20,7 +20,7 @@
       <mat-error *ngIf="form.get('description').invalid">Please enter a topic description.</mat-error>
     </mat-form-field>
     <mat-select placeholder="Choose Category" formControlName="categoryId">
-      <mat-option *ngFor="let cat of categories" [value]="cat._id">
+      <mat-option *ngFor="let cat of categories" [value]="cat.id">
         {{cat.name}}
       </mat-option>
     </mat-select>

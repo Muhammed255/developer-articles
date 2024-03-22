@@ -1,44 +1,65 @@
-import { NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
+import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
 
-import { FlashMessagesModule } from "angular2-flash-messages";
-import { PostsComponent } from "src/app/pages/posts/posts.component";
-import { LoginComponent } from "src/app/pages/login/login.component";
-import { SignupComponent } from "src/app/pages/signup/signup.component";
-import { AdminSignupComponent } from "src/app/pages/admin-signup/admin-signup.component";
-import { SingleArticlePostComponent } from 'src/app/pages/single-article-post/single-article-post.component';
-import { AuthProfileComponent } from 'src/app/pages/auth-profile/auth-profile.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { RouterModule, Routes } from '@angular/router';
+import { FlashMessagesModule } from 'angular2-flash-messages';
+import { AuthGuard } from 'src/app/guards/auth.guard';
 import { AuthProfileModule } from 'src/app/pages/auth-profile/auth-profile.module';
-import { RouterModule, Routes } from "@angular/router";
-import { AuthGuard } from "src/app/guards/auth.guard";
-import { MaterialModule } from "src/app/shared/material.module";
-import { UserPagesComponent } from "./user-pages.component";
-import { TopicArticlesComponent } from "src/app/pages/topic-articles/topic-articles.component";
-import { SearchModule } from "src/app/pages/search/search.module";
-
+import { ArticleCardModule } from 'src/app/pages/components/article-card/article-card.module';
+import { CommentModule } from 'src/app/pages/components/comment/comment.module';
+import { PostsModule } from 'src/app/pages/posts/posts.module';
+import { SearchModule } from 'src/app/pages/search/search.module';
+import { SingleArticlePostModule } from 'src/app/pages/single-article-post/single-article-post.module';
+import { MaterialModule } from 'src/app/shared/material.module';
+import { AuthModule } from '../../pages/auth/auth.module';
+import { UserPagesComponent } from './user-pages.component';
 
 const routes: Routes = [
   {
-    path: "",
+    path: '',
+    component: UserPagesComponent,
     children: [
-      { path: "wall", component: PostsComponent },
-      { path: "home", component: PostsComponent, canActivate: [AuthGuard] },
-      { path: "login", component: LoginComponent },
-      { path: "signup", component: SignupComponent },
-      { path: "admin-signup", component: AdminSignupComponent },
-      { path: "articles/:articleId", component: SingleArticlePostComponent },
-      { path: "topic-articles/:topicId", component: TopicArticlesComponent },
       {
-        path: ":username",
-        component: AuthProfileComponent,
+        path: 'wall',
+        loadChildren: () =>
+          import('../../pages/posts/posts.module').then((p) => p.PostsModule),
+      },
+      {
+        path: 'home',
+        loadChildren: () =>
+          import('../../pages/posts/posts.module').then((p) => p.PostsModule),
         canActivate: [AuthGuard],
+      },
+      {
+        path: '',
+        loadChildren: () =>
+          import('../../pages/auth/auth.module').then((m) => m.AuthModule),
+      },
+      {
+        path: 'articles/:articleId',
+        loadChildren: () =>
+          import(
+            '../../pages/single-article-post/single-article-post.module'
+          ).then((m) => m.SingleArticlePostModule),
+      },
+      {
+        path: ':username',
+        loadChildren: () =>
+          import('../../pages/auth-profile/auth-profile.module').then(
+            (m) => m.AuthProfileModule
+          ),
+      },
+      {
+        path: ':username/settings',
+        loadChildren: () =>
+          import('../../pages/settings/settings.module').then(
+            (m) => m.SettingsModule
+          ),
       },
     ],
   },
 ];
-
-
 
 @NgModule({
   imports: [
@@ -49,16 +70,13 @@ const routes: Routes = [
     FormsModule,
     ReactiveFormsModule,
     AuthProfileModule,
-    SearchModule
+    SearchModule,
+    ArticleCardModule,
+    CommentModule,
+    PostsModule,
+    SingleArticlePostModule,
+    AuthModule,
   ],
-  declarations: [
-    PostsComponent,
-    LoginComponent,
-    SignupComponent,
-    AdminSignupComponent,
-    SingleArticlePostComponent,
-    UserPagesComponent,
-    TopicArticlesComponent,
-  ]
+  declarations: [UserPagesComponent],
 })
 export class UserPagesModule {}

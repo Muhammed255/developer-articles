@@ -39,6 +39,14 @@ mat-card p {
   line-height: 36px;
 }
 
+.authUser, .userName {
+	margin: 0 0 0 0;
+}
+
+a {
+	text-decoration: none;
+}
+
 .pin {
   width: 24px;
   height: 24px;
@@ -99,7 +107,7 @@ mat-drawer-content {
                padding: 0 8px;
                width: 250px;
             }
-        }       
+        }
     }
 } */
 

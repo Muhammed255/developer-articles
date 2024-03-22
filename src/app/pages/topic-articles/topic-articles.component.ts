@@ -17,10 +17,10 @@ export class TopicArticlesComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(paramMap => {
-      if(!paramMap.has("topicId")) {
+      if(!+paramMap.has("topicId")) {
         return;
       }
-      this.articleService.getArticlesByTopic(paramMap.get("topicId")).subscribe(response => {
+      this.articleService.getArticlesByTopic(+paramMap.get("topicId")).subscribe(response => {
         if(response.success) {
           this.topic = response.topic;
           this.articles = response.articles;

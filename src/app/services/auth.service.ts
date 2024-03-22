@@ -1,26 +1,34 @@
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Router } from "@angular/router";
-import { Subject } from "rxjs";
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { BehaviorSubject, Observable } from 'rxjs';
 
-import { environment } from "../../environments/environment.prod";
-import { FlashMessagesService } from "angular2-flash-messages";
+import { FlashMessagesService } from 'angular2-flash-messages';
+import { map, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment.prod';
+import { ArticlePostService } from './article-post.service';
 
-const BACKEND_URL = environment.backendUrl + "/users/";
+const BACKEND_URL = environment.backendUrl + '/auth/';
 
-@Injectable({ providedIn: "root" })
+@Injectable({ providedIn: 'root' })
 export class AuthService {
+  private userSubject: BehaviorSubject<any | null> = new BehaviorSubject<
+    any | null
+  >(null);
+  public user$: Observable<any | null> = this.userSubject.asObservable();
+
   private isAuthenticated = false;
   private token: string;
   private tokenTimer: any;
-  private userId: string;
-  private authStatusListener = new Subject<boolean>();
+  private userId: number;
+  private authStatusListener = new BehaviorSubject<boolean>(false);
   private role: string;
 
   constructor(
     private http: HttpClient,
     public flashMessagesService: FlashMessagesService,
-    private router: Router
+    private router: Router,
+    private articleService: ArticlePostService
   ) {}
 
   getToken() {
@@ -39,6 +47,10 @@ export class AuthService {
     return this.userId;
   }
 
+  getUserSubject() {
+    return this.userSubject;
+  }
+
   getAuthStatusListener() {
     return this.authStatusListener.asObservable();
   }
@@ -50,11 +62,13 @@ export class AuthService {
     password: string,
     bio: string
   ) {
-    const authData = {name, username, email, password, bio};
+    const authData = { name, username, email, password, bio };
 
-    return this.http.post<{ response: any }>(BACKEND_URL + "signup", authData);
+    return this.http.post<{ success: boolean; msg: string; result: any }>(
+      BACKEND_URL + 'signup',
+      authData
+    );
   }
-
 
   adminSignup(
     name: string,
@@ -63,52 +77,65 @@ export class AuthService {
     password: string,
     bio: string
   ) {
-    
-    const authData = {name, username, email, password, bio};
+    const authData = { name, username, email, password, bio };
 
-    return this.http.post<{ response: any }>(BACKEND_URL + "admin-signup", authData);
+    return this.http.post<{ success: boolean; msg: string; result: any }>(
+      BACKEND_URL + 'admin-signup',
+      authData
+    );
   }
 
   login(email: string, password: string) {
     const authData = { email: email, password: password };
     this.http
-      .post<{ response: any }>(BACKEND_URL + "login", authData)
-      .subscribe((data) => {
-        const token = data.response.token;
-        this.token = token;
-        if(data.response.success) {
-          if (token) {
-            const role = data.response.role;
-            this.role = role;
-            const expiresInDuration = data.response.expiresIn;
-            this.setAuthTimer(expiresInDuration);
-            this.isAuthenticated = true;
-            this.userId = data.response.userId;
-            this.authStatusListener.next(true);
-            const now = new Date();
-            const expirationDate = new Date(
-              now.getTime() + expiresInDuration * 1000
-            );
-            console.log(expirationDate);
-            this.saveAuthData(token, expirationDate, this.userId, role);
-            this.flashMessagesService.show(data.response.msg, {
-              cssClass: "alert-success",
-              timeout: 3000,
-            });
-            console.log(role);
-            if(role === 'admin') {
-              this.router.navigate(["/admin/dashboard"]);
-            } else {
-              this.router.navigate(["/account/home"]);
+      .post<{
+        success: boolean;
+        msg: string;
+        token: string;
+        userId: number;
+        user: any;
+        role: string;
+        expiresIn: number;
+      }>(BACKEND_URL + 'login', authData)
+      .subscribe(
+        (data) => {
+          const token = data.token;
+          this.token = token;
+          if (data.success) {
+            this.userSubject.next(data.user);
+            if (token) {
+              const role = data.role;
+              this.role = role;
+              const expiresInDuration = data.expiresIn;
+              this.setAuthTimer(expiresInDuration);
+              this.isAuthenticated = true;
+              this.userId = data.userId;
+              this.authStatusListener.next(true);
+              const now = new Date();
+              const expirationDate = new Date(
+                now.getTime() + expiresInDuration * 1000
+              );
+              console.log(expirationDate);
+              this.saveAuthData(token, expirationDate, this.userId, this.role);
+              this.flashMessagesService.show(data.msg, {
+                cssClass: 'alert-success',
+                timeout: 3000,
+              });
+              if (role === 'admin') {
+                this.router.navigate(['/admin/dashboard']);
+              } else {
+                this.router.navigate(['/account/home']);
+              }
             }
           }
-        }
-      }, err=> {
-          this.flashMessagesService.show('Email or password are incorrect!!', {
-            cssClass: "alert-danger",
+        },
+        (err) => {
+          this.flashMessagesService.show(err.error.msg, {
+            cssClass: 'alert-danger',
             timeout: 3000,
           });
-      });
+        }
+      );
   }
 
   autoAuthUser() {
@@ -121,10 +148,13 @@ export class AuthService {
     if (expiresIn > 0) {
       this.token = authInformation.token;
       this.isAuthenticated = true;
-      this.userId = authInformation.userId;
+      this.userId = Number(authInformation.userId);
+      this.role = authInformation.role;
       this.setAuthTimer(expiresIn / 1000);
       this.authStatusListener.next(true);
-    }
+    } else {
+			this.clearAuthData()
+		}
   }
 
   logout() {
@@ -132,41 +162,47 @@ export class AuthService {
     this.isAuthenticated = false;
     this.userId = null;
     this.authStatusListener.next(false);
+		this.userSubject.next(null);
     clearTimeout(this.tokenTimer);
     this.clearAuthData();
-    this.flashMessagesService.show("Logged out !!", {
-      cssClass: "alert-success",
+    this.flashMessagesService.show('Logged out !!', {
+      cssClass: 'alert-success',
       timeout: 3000,
     });
-    this.router.navigate(["/account/login"]);
+    this.router.navigate(['/account/wall']);
   }
 
   private setAuthTimer(duration: number) {
-    console.log("Setting timer: " + duration);
+    console.log('Setting timer: ' + duration);
     this.tokenTimer = setTimeout(() => {
       this.logout();
     }, duration * 1000);
   }
 
-  private saveAuthData(token: string, expirationDate: Date, userId: string, role: string) {
-    localStorage.setItem("token", token);
-    localStorage.setItem("expiration", expirationDate.toISOString());
-    localStorage.setItem("userId", userId);
-    localStorage.setItem("role", role);
+  private saveAuthData(
+    token: string,
+    expirationDate: Date,
+    userId: number,
+    role: string
+  ) {
+    localStorage.setItem('token', token);
+    localStorage.setItem('expiration', expirationDate.toISOString());
+    localStorage.setItem('userId', userId.toString());
+    localStorage.setItem('role', role);
   }
 
   private clearAuthData() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("expiration");
-    localStorage.removeItem("userId");
-    localStorage.removeItem("role");
+    localStorage.removeItem('token');
+    localStorage.removeItem('expiration');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('role');
   }
 
   private getAuthData() {
-    const token = localStorage.getItem("token");
-    const expirationDate = localStorage.getItem("expiration");
-    const userId = localStorage.getItem("userId");
-    const role = localStorage.getItem("role");
+    const token = localStorage.getItem('token');
+    const expirationDate = localStorage.getItem('expiration');
+    const userId = localStorage.getItem('userId');
+    const role = localStorage.getItem('role');
     if (!token || !expirationDate) {
       return;
     }
@@ -174,12 +210,14 @@ export class AuthService {
       token: token,
       expirationDate: new Date(expirationDate),
       userId: userId,
-      role: role
+      role: role,
     };
   }
 
   getAuthProfile() {
-    return this.http.get<{ response: any }>(BACKEND_URL + "profile");
+    return this.http.get<{ success: boolean; msg: string; user: any }>(
+      BACKEND_URL + 'profile'
+    );
   }
 
   getUserProfile(username: string) {
@@ -187,14 +225,54 @@ export class AuthService {
   }
 
   getUsers() {
-    return this.http.get<{ users: any[] }>(BACKEND_URL + "all-users");
+    return this.http.get<{ users: any[] }>(BACKEND_URL + 'all-users');
   }
 
-  findUserById(id) {
-    return this.http.get<{response: any}>(BACKEND_URL + id);
+  findUserById(id: number) {
+    return this.http
+      .get<{ success: boolean; msg: string; user: any }>(BACKEND_URL + id)
+      .subscribe((res) => {
+        this.userSubject.next(res.user);
+      });
   }
 
   findUserByUsername(username: string) {
-    return this.http.get<{response: any}>(BACKEND_URL + 'user/' + username);
+    return this.http
+      .get<{ success: boolean; msg: string; user: any }>(
+        BACKEND_URL + 'user/' + username
+      )
+      .pipe(
+        map((res) => {
+					// this.userSubject.next(res.user);
+          this.articleService
+					.getPostSubListener()
+					.next({
+						articles: res.user.articles,
+						maxArticles: res.user.articles.length,
+					});
+          return res.user;
+        }),
+        tap((user) => {
+          if (!user.articles) {
+            user.articles = []; // Ensure articles property is initialized
+          }
+        })
+      );
+  }
+
+  getAdminDashboard() {
+    return this.http.get<{
+      success: boolean;
+      msg: string;
+      data: {
+        categoriesCount: number;
+        topicsCount: number;
+        articlesCount: number;
+        commentsCount: number;
+        repliesCount: number;
+        likesCount: number;
+        dislikesCount: number;
+      };
+    }>(BACKEND_URL + 'get-dashboard');
   }
 }

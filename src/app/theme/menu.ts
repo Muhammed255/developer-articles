@@ -1,7 +1,7 @@
 import { Menu } from './menu.model';
 
-export const verticalMenuItems = [ 
-    new Menu (1, 'Dashboard', '/', null, 'dashboard', null, false, 0),
+export const verticalMenuItems = [
+    new Menu (1, 'Dashboard', '/admin/dashboard', null, 'dashboard', null, false, 0),
     new Menu (2, 'Categories', null, null, 'list', null, true, 0),
     new Menu (3, 'All', '/admin/categories', null, 'category', null, false, 2),
     new Menu (4, 'Add New', '/admin/add-category', null, 'new_releases', null, false, 2),
