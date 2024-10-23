@@ -63,10 +63,8 @@ export class SingleArticlePostComponent
   }
 
   ngAfterViewInit(): void {
-    // Scroll to the comments section when the component has finished initializing
     if (this.route.snapshot.fragment === 'commentsSection') {
       setTimeout(() => {
-        // Use setTimeout to ensure the element is fully rendered
         this.commentsSection.nativeElement.scrollIntoView({
           behavior: 'smooth',
         });
